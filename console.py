@@ -113,27 +113,42 @@ class HBNBCommand(cmd.Cmd):
         """ Overrides the emptyline method of CMD """
         pass
 
-    def do_create(self, args):
-        """ Create an object of any class"""
-        from models import storage
-        if not args:
-            print("** class name missing **")
-            return
-        args = args.partition(' ')
-        if args[0] not in HBNBCommand.classes:
-            print("** class doesn't exist **")
-            return
-        params = args[2].split(' ')
-        new_instance = HBNBCommand.classes[args[0]]()
-        param_dict = {}
-        for param in params:
-            param = param.partition("=")
-            param_dict[param[0]] = param[2].replace('"', '').replace('_', ' ')
-        new_instance.__dict__.update(**param_dict)
+    def do_create(self, arg):
+    """ Create an object of any class with given parameters """
+    if not arg:
+        print("** class name missing **")
+        return
+    args = arg.split()
+    class_name = args[0]
 
-        storage.new(new_instance)
-        print(new_instance.id)
-        new_instance.save()
+    if class_name not in HBNBCommand.classes:
+        print("** class doesn't exist **")
+        return
+
+    # create a dictionary of keyword arguments
+    kwargs = {}
+    for i in range(1, len(args)):
+        try:
+            key, value = args[i].split('=')
+            # replace underscores with spaces in key name
+            key = key.replace('_', ' ')
+            # handle string values
+            if value[0] == '"' and value[-1] == '"':
+                value = value[1:-1].replace('\\', '')
+            # handle float values
+            elif '.' in value:
+                value = float(value)
+            # handle integer values
+            else:
+                value = int(value)
+            kwargs[key] = value
+        except:
+            continue
+
+    new_instance = HBNBCommand.classes[class_name](**kwargs)
+    storage.save()
+    print(new_instance.id)
+    storage.save()
 
     def help_create(self):
         """ Help information for the create method """
